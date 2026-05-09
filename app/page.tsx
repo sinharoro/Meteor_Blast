@@ -142,13 +142,13 @@ export default function MeteorBlast() {
 
   const activateSpecialSkill = useCallback(() => {
     const state = gameState.current;
-    if (state.charge < 100 || state.specialSkillActive) return;
+    if (state.specialCharge < 100 || state.specialSkillActive) return;
     
     state.specialSkillActive = true;
     state.specialSkillTimer = 180;
     state.shakeTimer = 20;
-    state.charge = 0;
-    setCharge(0);
+    state.specialCharge = 0;
+    setSpecialCharge(0);
     setShowChargeBtn(false);
     state.laserBeam.hitEnemies.clear();
   }, []);
@@ -699,6 +699,13 @@ export default function MeteorBlast() {
         state.isSpecialActive = false;
       }
     }
+
+    if (state.specialSkillActive) {
+      state.specialSkillTimer--;
+      if (state.specialSkillTimer <= 0) {
+        state.specialSkillActive = false;
+      }
+    }
   }, [createExplosion, spawnEnemy, spawnBigEnemy]);
 
   const drawGame = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -732,6 +739,72 @@ export default function MeteorBlast() {
         ctx.drawImage(sprite, pu.x, pu.y);
         ctx.restore();
       });
+
+      if (state.specialSkillActive) {
+        ctx.save();
+        const centerY = state.player.y + state.player.h / 2;
+        const beamY = centerY;
+        const shipNoseX = state.player.x + state.player.w + 15;
+        const laserWidth = state.player.h * 3;
+        
+        ctx.globalAlpha = 0.8;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#00FFFF';
+        
+        ctx.fillStyle = '#00BFFF';
+        ctx.beginPath();
+        ctx.arc(shipNoseX, beamY, laserWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        
+        ctx.strokeStyle = '#00BFFF';
+        ctx.lineWidth = 120;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(shipNoseX, beamY);
+        ctx.lineTo(CANVAS_WIDTH, beamY);
+        ctx.stroke();
+        ctx.closePath();
+        
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 50;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(shipNoseX, beamY);
+        ctx.lineTo(CANVAS_WIDTH, beamY);
+        ctx.stroke();
+        ctx.closePath();
+        
+        ctx.strokeStyle = '#00FFFF';
+        ctx.lineWidth = 10;
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.moveTo(shipNoseX, beamY);
+        ctx.lineTo(CANVAS_WIDTH, beamY);
+        ctx.stroke();
+        ctx.closePath();
+        
+        ctx.restore();
+        
+        for (let i = state.enemies.length - 1; i >= 0; i--) {
+          const en = state.enemies[i];
+          const enemyCenterY = en.y + en.h / 2;
+          if (Math.abs(enemyCenterY - centerY) < 65 && en.x > state.player.x) {
+            createExplosion(en.x + en.w / 2, en.y + en.h / 2, '#00BFFF', 12);
+            state.enemies.splice(i, 1);
+            setScore((s) => s + 10);
+          }
+        }
+        for (let i = state.bigenemies.length - 1; i >= 0; i--) {
+          const ben = state.bigenemies[i];
+          const benCenterY = ben.y + ben.h / 2;
+          if (Math.abs(benCenterY - centerY) < 75 && ben.x > state.player.x) {
+            createExplosion(ben.x + ben.w / 2, ben.y + ben.h / 2, '#00BFFF', 15);
+            state.bigenemies.splice(i, 1);
+            setScore((s) => s + 100);
+          }
+        }
+      }
 
       const player = state.player;
       ctx.save();
@@ -903,72 +976,6 @@ export default function MeteorBlast() {
         ctx.restore();
       });
 
-      // Draw special laser beam (Z key)
-      if (state.isSpecialActive) {
-        ctx.save();
-        const centerY = player.y + player.h / 2;
-        const beamY = centerY;
-        const shipNoseX = player.x + player.w;
-        const laserWidth = player.h * 3;
-        
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = '#00FFFF';
-        
-        ctx.fillStyle = '#00BFFF';
-        ctx.beginPath();
-        ctx.arc(shipNoseX, beamY, laserWidth / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        
-        ctx.strokeStyle = '#00BFFF';
-        ctx.lineWidth = 120;
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(shipNoseX, beamY);
-        ctx.lineTo(CANVAS_WIDTH, beamY);
-        ctx.stroke();
-        ctx.closePath();
-        
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 50;
-        ctx.globalAlpha = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(shipNoseX, beamY);
-        ctx.lineTo(CANVAS_WIDTH, beamY);
-        ctx.stroke();
-        ctx.closePath();
-        
-        ctx.strokeStyle = '#00FFFF';
-        ctx.lineWidth = 10;
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.moveTo(shipNoseX, beamY);
-        ctx.lineTo(CANVAS_WIDTH, beamY);
-        ctx.stroke();
-        ctx.closePath();
-        
-        ctx.restore();
-        
-        for (let i = state.enemies.length - 1; i >= 0; i--) {
-          const en = state.enemies[i];
-          const enemyCenterY = en.y + en.h / 2;
-          if (Math.abs(enemyCenterY - centerY) < 65 && en.x > player.x) {
-            createExplosion(en.x + en.w / 2, en.y + en.h / 2, '#00BFFF', 12);
-            state.enemies.splice(i, 1);
-            setScore((s) => s + 10);
-          }
-        }
-        for (let i = state.bigenemies.length - 1; i >= 0; i--) {
-          const ben = state.bigenemies[i];
-          const benCenterY = ben.y + ben.h / 2;
-          if (Math.abs(benCenterY - centerY) < 75 && ben.x > player.x) {
-            createExplosion(ben.x + ben.w / 2, ben.y + ben.h / 2, '#00BFFF', 15);
-            state.bigenemies.splice(i, 1);
-            setScore((s) => s + 100);
-          }
-        }
-      }
-
       // Draw emergency shockwave
       if (state.shockwaveActive) {
         ctx.save();
@@ -986,11 +993,6 @@ export default function MeteorBlast() {
         ctx.stroke();
         ctx.restore();
       }
-      
-      // Draw search laser beam (1945 style)
-      if (state.specialSkillActive) {
-        updateLaserBeam(ctx);
-      }
     }
     ctx.restore();
   }, [getEmojiSprite, updateLaserBeam]);
@@ -1006,16 +1008,14 @@ export default function MeteorBlast() {
       }
       gameState.current.keys[e.code] = true;
       if ((e.code === 'KeyP' || e.code === 'Escape') && gameState.current.running) {
-        if (!gameState.current.paused) {
-          gameState.current.paused = !gameState.current.paused;
-        }
+        gameState.current.paused = !gameState.current.paused;
       }
       if (e.code === 'KeyQ' && gameState.current.running) {
         gameState.current.paused = true;
         setShowQuitModal(true);
       }
       if (e.code === 'Digit1' && gameState.current.running && gameState.current.specialCharge >= 100) {
-        activateUltimate();
+        activateSpecialSkill();
       }
     };
 
@@ -1134,10 +1134,17 @@ export default function MeteorBlast() {
     state.bullets = [];
     state.particles = [];
     state.powerUps = [];
+    state.specialCharge = 0;
+    state.isSpecialActive = false;
+    state.specialTimer = 0;
+    state.specialSkillActive = false;
+    state.specialSkillTimer = 0;
     Object.keys(state.keys).forEach((k) => (state.keys[k] = false));
 
     setScore(0);
     setHealth(100);
+    setSpecialCharge(0);
+    setShowChargeBtn(false);
     setShowLogin(true);
     setShowSubweaponSelect(false);
     setShowLoading(false);
@@ -1292,6 +1299,9 @@ export default function MeteorBlast() {
             </li>
             <li>
               <span>Q</span> : QUIT MISSION
+            </li>
+            <li>
+              <span>1</span> : SPECIAL LASER
             </li>
           </ul>
         </div>
