@@ -14,7 +14,14 @@ interface Bullet {
   y: number;
   r: number;
   speed: number;
+  speedX?: number;
+  speedY?: number;
   color: string;
+  trail: { x: number; y: number; alpha: number }[];
+  isSubweapon?: boolean;
+  subweaponType?: SubweaponType;
+  target?: Enemy | BigEnemy;
+  angle?: number;
 }
 
 interface Enemy {
@@ -51,12 +58,31 @@ interface PowerUp {
   h: number;
   type: string;
   speed: number;
+  subweaponType?: SubweaponType;
 }
 
 interface Score {
   name: string;
   score: number;
 }
+
+type SubweaponType = 'homing-missiles' | 'search-laser' | 'plasma-mines' | 'seeking-wingmen' | 'heat-missiles' | 'napalm';
+
+interface Subweapon {
+  id: SubweaponType;
+  name: string;
+  description: string;
+  emoji: string;
+}
+
+const SUBWEAPONS: Subweapon[] = [
+  { id: 'homing-missiles', name: 'Homing Missiles', description: 'Auto-target enemies', emoji: '🎯' },
+  { id: 'search-laser', name: 'Search Laser', description: 'Piercing laser', emoji: '⚡' },
+  { id: 'plasma-mines', name: 'Plasma Mines', description: 'Bullet shield', emoji: '💠' },
+  { id: 'seeking-wingmen', name: 'Seeking Wingmen', description: 'Attack drones', emoji: '🛸' },
+  { id: 'heat-missiles', name: 'Heat Missiles', description: 'Piercing missiles', emoji: '🔥' },
+  { id: 'napalm', name: 'Napalm Bombs', description: 'Zigzag flames', emoji: '💥' },
+];
 
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 450;
@@ -71,6 +97,7 @@ export default function MeteorBlast() {
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [playerName, setPlayerName] = useState('');
+  const [selectedSubweapon, setSelectedSubweapon] = useState<SubweaponType>('homing-missiles');
   const [leaderboard, setLeaderboard] = useState<Score[]>([]);
   const [emergencyUsed, setEmergencyUsed] = useState(false);
   const [shieldLabel, setShieldLabel] = useState('SHIELD');
@@ -103,6 +130,9 @@ export default function MeteorBlast() {
       isRapidFiring: false,
       rapidFireTimer: null as NodeJS.Timeout | null,
       rotation: 0,
+      subweapon: 'homing-missiles' as SubweaponType,
+      subweaponCooldown: 0,
+      subweaponLevel: 1,
     },
     spriteCache: {} as Record<string, HTMLCanvasElement>,
     currentPlayerName: '',
@@ -232,15 +262,215 @@ export default function MeteorBlast() {
       if (state.shockwaveRadius > MAX_SHOCKWAVE) state.shockwaveActive = false;
     }
 
-    const currentFireRate = player.isRapidFiring ? 35 : FIRE_RATE;
+    const currentFireRate = player.isRapidFiring ? 45 : FIRE_RATE;
     if (state.keys['Space'] && Date.now() - state.lastFireTime > currentFireRate) {
       if (player.isRapidFiring) {
-        state.bullets.push({ x: player.x + player.w, y: player.y + 5, r: 3, speed: 12, color: '#ff0000' });
-        state.bullets.push({ x: player.x + player.w, y: player.y + player.h - 5, r: 3, speed: 12, color: '#ff0000' });
+        state.bullets.push({ x: player.x + player.w, y: player.y + 5, r: 4, speed: 14, color: '#ff3333', trail: [] });
+        state.bullets.push({ x: player.x + player.w, y: player.y + player.h - 5, r: 4, speed: 14, color: '#ff3333', trail: [] });
       } else {
-        state.bullets.push({ x: player.x + player.w, y: player.y + player.h / 2, r: 3, speed: 12, color: '#fff' });
+        const bulletColors = ['#00ffff', '#ff00ff', '#ffff00', '#00ff00'];
+        state.bullets.push({
+          x: player.x + player.w,
+          y: player.y + player.h / 2,
+          r: 5,
+          speed: 14,
+          color: bulletColors[Math.floor(Math.random() * bulletColors.length)],
+          trail: []
+        });
       }
       state.lastFireTime = Date.now();
+    }
+
+    if (player.subweaponCooldown > 0) {
+      player.subweaponCooldown--;
+    }
+
+    if (state.keys['Space'] && player.subweaponCooldown === 0 && player.subweaponLevel > 0) {
+      const subweaponType = player.subweapon;
+      if (subweaponType === 'homing-missiles') {
+        const allTargets = [...state.enemies, ...state.bigenemies];
+        if (allTargets.length > 0) {
+          const target = allTargets[Math.floor(Math.random() * allTargets.length)];
+          const angle = Math.atan2((target.y + target.h / 2) - (player.y + player.h / 2), (target.x + target.w / 2) - (player.x + player.w));
+          state.bullets.push({
+            x: player.x + player.w,
+            y: player.y + player.h / 2,
+            r: 6,
+            speed: 10,
+            color: '#ff6600',
+            trail: [],
+            isSubweapon: true,
+            subweaponType: 'homing-missiles',
+            target,
+            angle
+          });
+        } else {
+          state.bullets.push({
+            x: player.x + player.w,
+            y: player.y + player.h / 2,
+            r: 6,
+            speed: 10,
+            color: '#ff6600',
+            trail: [],
+            isSubweapon: true,
+            subweaponType: 'homing-missiles'
+          });
+        }
+        player.subweaponCooldown = 25;
+      } else if (subweaponType === 'search-laser') {
+        state.bullets.push({
+          x: player.x + player.w,
+          y: player.y + player.h / 2 - 8,
+          r: 4,
+          speed: 18,
+          color: '#00ffaa',
+          trail: [],
+          isSubweapon: true,
+          subweaponType: 'search-laser'
+        });
+        state.bullets.push({
+          x: player.x + player.w,
+          y: player.y + player.h / 2 + 8,
+          r: 4,
+          speed: 18,
+          color: '#00ffaa',
+          trail: [],
+          isSubweapon: true,
+          subweaponType: 'search-laser'
+        });
+        player.subweaponCooldown = 15;
+      } else if (subweaponType === 'plasma-mines') {
+        state.bullets.push({
+          x: player.x + player.w / 2,
+          y: player.y,
+          r: 12,
+          speed: 2,
+          color: '#aa44ff',
+          trail: [],
+          isSubweapon: true,
+          subweaponType: 'plasma-mines'
+        });
+        player.subweaponCooldown = 60;
+      } else if (subweaponType === 'seeking-wingmen') {
+        for (let i = -1; i <= 1; i++) {
+          state.bullets.push({
+            x: player.x + player.w,
+            y: player.y + player.h / 2 + i * 15,
+            r: 5,
+            speed: 12,
+            color: '#ffff00',
+            trail: [],
+            isSubweapon: true,
+            subweaponType: 'seeking-wingmen'
+          });
+        }
+        player.subweaponCooldown = 20;
+      } else if (subweaponType === 'heat-missiles') {
+        state.bullets.push({
+          x: player.x + player.w,
+          y: player.y + player.h / 2 - 5,
+          r: 5,
+          speed: 16,
+          color: '#ff3300',
+          trail: [],
+          isSubweapon: true,
+          subweaponType: 'heat-missiles'
+        });
+        state.bullets.push({
+          x: player.x + player.w,
+          y: player.y + player.h / 2 + 5,
+          r: 5,
+          speed: 16,
+          color: '#ff3300',
+          trail: [],
+          isSubweapon: true,
+          subweaponType: 'heat-missiles'
+        });
+        player.subweaponCooldown = 18;
+      } else if (subweaponType === 'napalm') {
+        const zigzag = Math.random() > 0.5 ? 1 : -1;
+        state.bullets.push({
+          x: player.x + player.w,
+          y: player.y + player.h / 2,
+          r: 8,
+          speed: 8,
+          color: '#ff4400',
+          trail: [],
+          isSubweapon: true,
+          subweaponType: 'napalm',
+          angle: zigzag * 0.3
+        });
+        player.subweaponCooldown = 30;
+      }
+    }
+
+    for (let i = state.bullets.length - 1; i >= 0; i--) {
+      const b = state.bullets[i];
+      if (b.isSubweapon && b.subweaponType) {
+        if (b.subweaponType === 'homing-missiles' && b.target) {
+          const tx = b.target.x + b.target.w / 2;
+          const ty = b.target.y + b.target.h / 2;
+          if (b.target.hp <= 0) {
+            const allTargets = [...state.enemies, ...state.bigenemies].filter(e => e.hp > 0);
+            if (allTargets.length > 0) {
+              b.target = allTargets[Math.floor(Math.random() * allTargets.length)];
+            } else {
+              b.speed = 14;
+            }
+          } else {
+            const targetAngle = Math.atan2(ty - b.y, tx - b.x);
+            const currentAngle = b.angle || 0;
+            const newAngle = currentAngle + (targetAngle - currentAngle) * 0.1;
+            b.angle = newAngle;
+            b.speedX = Math.cos(newAngle) * 10;
+            b.speedY = Math.sin(newAngle) * 10;
+            b.x += Math.cos(newAngle) * 10;
+            b.y += Math.sin(newAngle) * 10;
+            continue;
+          }
+        } else if (b.subweaponType === 'napalm') {
+          b.y += Math.sin(b.angle || 0) * 3;
+          b.angle = -(b.angle || 0);
+        } else if (b.subweaponType === 'search-laser') {
+          b.r = 4;
+        } else if (b.subweaponType === 'plasma-mines') {
+          b.speed = Math.max(0, b.speed - 0.1);
+          if (b.speed < 0.5) b.speed = 0;
+          if (b.speed === 0 && b.r < 30) b.r += 0.5;
+        }
+      }
+      b.x += b.speed;
+      if (b.x > CANVAS_WIDTH + 50 || b.x < -50 || b.y < -50 || b.y > CANVAS_HEIGHT + 50) {
+        state.bullets.splice(i, 1);
+        continue;
+      }
+      if (b.isSubweapon && b.subweaponType === 'plasma-mines' && b.speed === 0) {
+        for (let j = state.enemies.length - 1; j >= 0; j--) {
+          const en = state.enemies[j];
+          const dx = b.x - (en.x + en.w / 2);
+          const dy = b.y - (en.y + en.h / 2);
+          if (Math.sqrt(dx * dx + dy * dy) < b.r + 20) {
+            createExplosion(en.x + 15, en.y + 15, '#aa44ff', 10);
+            state.enemies.splice(j, 1);
+            setScore(s => s + 15);
+          }
+        }
+        for (let j = state.bigenemies.length - 1; j >= 0; j--) {
+          const ben = state.bigenemies[j];
+          const dx = b.x - (ben.x + ben.w / 2);
+          const dy = b.y - (ben.y + ben.h / 2);
+          if (Math.sqrt(dx * dx + dy * dy) < b.r + 30) {
+            createExplosion(ben.x + 30, ben.y + 30, '#aa44ff', 15);
+            ben.hp -= 2;
+            if (ben.hp <= 0) {
+              createExplosion(ben.x + 30, ben.y + 30, 'red', 25);
+              state.bigenemies.splice(j, 1);
+              setScore(s => s + 150);
+            }
+          }
+        }
+        if (b.r >= 30) state.bullets.splice(i, 1);
+      }
     }
 
     if (state.shakeTimer > 0) state.shakeTimer--;
@@ -265,6 +495,9 @@ export default function MeteorBlast() {
           player.rapidFireTimer = setTimeout(() => {
             player.isRapidFiring = false;
           }, 7000);
+        } else if (pu.type === 'subweapon') {
+          player.subweaponLevel = Math.min(player.subweaponLevel + 1, 3);
+          setScore((s) => s + 100);
         }
         state.powerUps.splice(i, 1);
       } else if (pu.x + pu.w < 0) {
@@ -313,6 +546,16 @@ export default function MeteorBlast() {
           state.enemies.splice(i, 1);
           state.bullets.splice(bi, 1);
           setScore((s) => s + 10);
+          if (Math.random() < 0.15) {
+            state.powerUps.push({
+              x: en.x,
+              y: en.y,
+              w: 25,
+              h: 25,
+              type: 'subweapon',
+              speed: 2
+            });
+          }
           break;
         }
       }
@@ -355,6 +598,16 @@ export default function MeteorBlast() {
                 h: 30,
                 type: types[Math.floor(Math.random() * types.length)],
                 speed: 2,
+              });
+            }
+            if (Math.random() < 0.25) {
+              state.powerUps.push({
+                x: ben.x,
+                y: ben.y,
+                w: 25,
+                h: 25,
+                type: 'subweapon',
+                speed: 2
               });
             }
             state.bigenemies.splice(i, 1);
@@ -409,6 +662,7 @@ export default function MeteorBlast() {
         if (pu.type === 'shield') emoji = '🔧';
         else if (pu.type === 'score') emoji = '💎';
         else if (pu.type === 'rapid-fire') emoji = '🔥';
+        else if (pu.type === 'subweapon') emoji = '🚀';
 
         const sprite = getEmojiSprite(emoji, 25);
         ctx.drawImage(sprite, pu.x, pu.y);
@@ -425,51 +679,132 @@ export default function MeteorBlast() {
       ctx.rotate(player.rotation);
 
       if (state.running) {
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = '#00d4ff';
-        ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#00d4ff';
+        ctx.fillStyle = Math.random() > 0.5 ? '#88ddff' : '#66ccff';
         ctx.beginPath();
-        ctx.moveTo(-player.w / 2, -6);
-        ctx.lineTo(-player.w / 2 - (15 + Math.random() * 12), 0);
-        ctx.lineTo(-player.w / 2, 6);
+        ctx.moveTo(-player.w / 2, -5);
+        ctx.lineTo(-player.w / 2 - (10 + Math.random() * 8), 0);
+        ctx.lineTo(-player.w / 2, 5);
         ctx.fill();
       }
 
       if (player.health > 25 && !player.emergencyUsed) {
-        ctx.strokeStyle = `rgba(0, 255, 255, ${player.health / 250})`;
+        const shieldGlow = player.health / 250;
+        const time = Date.now() / 1000;
+        const gradient = ctx.createRadialGradient(0, 0, 20, 0, 0, 50);
+        gradient.addColorStop(0, `rgba(0, 255, 255, ${shieldGlow * 0.3})`);
+        gradient.addColorStop(1, 'rgba(0, 100, 200, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, 50, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = `rgba(0, 255, 255, ${0.5 + shieldGlow * 0.5})`;
         ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
+        ctx.setLineDash([8, 4]);
+        ctx.lineDashOffset = -time * 20;
         ctx.beginPath();
         ctx.arc(0, 0, 38, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
       }
 
-      ctx.shadowBlur = player.isRapidFiring ? 20 : 5;
-      ctx.shadowColor = player.isRapidFiring ? 'red' : '#00FF00';
-      ctx.fillStyle = 'white';
+      ctx.shadowBlur = player.isRapidFiring ? 25 : 8;
+      ctx.shadowColor = player.isRapidFiring ? '#ff4400' : '#00ffff';
+
+      const shipGradient = ctx.createLinearGradient(-25, 0, 25, 0);
+      shipGradient.addColorStop(0, '#0066aa');
+      shipGradient.addColorStop(0.5, '#00ddff');
+      shipGradient.addColorStop(1, '#00ffff');
+      ctx.fillStyle = shipGradient;
       ctx.beginPath();
-      ctx.moveTo(-20, -10);
-      ctx.lineTo(25, 0);
-      ctx.lineTo(-20, 10);
-      ctx.lineTo(-10, 0);
+      ctx.moveTo(30, 0);
+      ctx.lineTo(-15, -12);
+      ctx.lineTo(-25, -18);
+      ctx.lineTo(-20, -8);
+      ctx.lineTo(-10, -10);
+      ctx.lineTo(-10, 10);
+      ctx.lineTo(-20, 8);
+      ctx.lineTo(-25, 18);
+      ctx.lineTo(-15, 12);
+      ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = player.color;
+      ctx.fillStyle = '#003366';
       ctx.beginPath();
-      ctx.moveTo(-10, -15);
-      ctx.lineTo(10, -5);
-      ctx.lineTo(10, 5);
-      ctx.lineTo(-10, 15);
+      ctx.moveTo(30, 0);
+      ctx.lineTo(-5, -6);
+      ctx.lineTo(-5, 6);
+      ctx.closePath();
       ctx.fill();
+
+      const cockpitGradient = ctx.createRadialGradient(15, 0, 0, 15, 0, 8);
+      cockpitGradient.addColorStop(0, '#ffffff');
+      cockpitGradient.addColorStop(0.3, '#00ffff');
+      cockpitGradient.addColorStop(1, '#0066aa');
+      ctx.fillStyle = cockpitGradient;
+      ctx.beginPath();
+      ctx.ellipse(12, 0, 8, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(22, -2);
+      ctx.lineTo(-8, -7);
+      ctx.moveTo(22, 2);
+      ctx.lineTo(-8, 7);
+      ctx.stroke();
+
+      const engineGlow = Math.sin(Date.now() / 100) * 0.3 + 0.7;
+      const engineColors = player.isRapidFiring 
+        ? ['#ff6600', '#ff3300', '#ffff00'] 
+        : ['#00ffff', '#0088ff', '#ffffff'];
+      
+      for (let i = 0; i < 3; i++) {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = engineColors[i];
+        ctx.fillStyle = engineColors[i];
+        const offsetY = (i - 1) * 4;
+        const flameLen = 10 + Math.random() * 15 + (player.isRapidFiring ? 10 : 0);
+        ctx.beginPath();
+        ctx.moveTo(-25, offsetY - 2);
+        ctx.lineTo(-25 - flameLen, offsetY);
+        ctx.lineTo(-25, offsetY + 2);
+        ctx.closePath();
+        ctx.globalAlpha = engineGlow;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.shadowBlur = 3;
+      ctx.fillStyle = '#00ff88';
+      ctx.fillRect(-8, -12, 20, 3);
+      ctx.fillRect(-8, 9, 20, 3);
 
       ctx.restore();
 
       state.bullets.forEach((b) => {
-        ctx.fillStyle = b.color || '#fff';
+        const trailLen = b.trail.length;
+        for (let i = 0; i < trailLen; i++) {
+          const t = b.trail[i];
+          const alpha = (trailLen - i) / trailLen;
+          ctx.globalAlpha = alpha * 0.4;
+          ctx.fillStyle = b.color;
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, b.r * alpha * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = b.color;
+        ctx.fillStyle = b.color;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
       });
 
       state.enemies.forEach((en) => {
@@ -540,10 +875,12 @@ export default function MeteorBlast() {
   }, [initStars]);
 
   useEffect(() => {
-    if (!showLogin) {
+    if (!showLogin && !showSubweaponSelect) {
       gameState.current.running = true;
+    } else {
+      gameState.current.running = false;
     }
-  }, [showLogin]);
+  }, [showLogin, showSubweaponSelect]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -620,6 +957,7 @@ export default function MeteorBlast() {
     state.player.health = 100;
     state.player.emergencyUsed = false;
     state.player.isRapidFiring = false;
+    state.player.subweaponLevel = 1;
     if (state.player.rapidFireTimer) clearTimeout(state.player.rapidFireTimer);
     state.player.rapidFireTimer = null;
     state.player.x = 12;
@@ -643,6 +981,7 @@ export default function MeteorBlast() {
     setScore(0);
     setHealth(100);
     setShowLogin(true);
+    setShowSubweaponSelect(false);
     setShowLoading(false);
     setEmergencyUsed(false);
     setShieldLabel('SHIELD');
@@ -832,6 +1171,7 @@ export default function MeteorBlast() {
                 className={healthBarClass}
               />
             </div>
+            <span id="health-percent" className={healthBarClass}>{Math.round(health)}%</span>
           </div>
         </div>
 
