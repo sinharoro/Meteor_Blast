@@ -14,19 +14,6 @@ import {
   SUBWEAPONS
 } from '../types/gameObjects';
 
-import { 
-  Star,
-  Bullet,
-  Enemy,
-  BigEnemy,
-  Particle,
-  PowerUp,
-  Score,
-  SubweaponType,
-  Subweapon,
-  SUBWEAPONS
-} from '../types/gameObjects';
-
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 450;
 const FIRE_RATE = 100;
