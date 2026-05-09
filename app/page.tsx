@@ -1,88 +1,31 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { 
+  Star,
+  Bullet,
+  Enemy,
+  BigEnemy,
+  Particle,
+  PowerUp,
+  Score,
+  SubweaponType,
+  Subweapon,
+  SUBWEAPONS
+} from '../types/gameObjects';
 
-interface Star {
-  x: number;
-  y: number;
-  size: number;
-  speed: number;
-}
-
-interface Bullet {
-  x: number;
-  y: number;
-  r: number;
-  speed: number;
-  speedX?: number;
-  speedY?: number;
-  color: string;
-  trail: { x: number; y: number; alpha: number }[];
-  isSubweapon?: boolean;
-  subweaponType?: SubweaponType;
-  target?: Enemy | BigEnemy;
-  angle?: number;
-}
-
-interface Enemy {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  hp: number;
-  speed: number;
-  velocityY: number;
-  rotation: number;
-  spin: number;
-}
-
-interface BigEnemy extends Enemy {
-  hp: number;
-}
-
-interface Particle {
-  x: number;
-  y: number;
-  size: number;
-  speedX: number;
-  speedY: number;
-  color: string;
-  life: number;
-  decay: number;
-}
-
-interface PowerUp {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  type: string;
-  speed: number;
-  subweaponType?: SubweaponType;
-}
-
-interface Score {
-  name: string;
-  score: number;
-}
-
-type SubweaponType = 'homing-missiles' | 'search-laser' | 'plasma-mines' | 'seeking-wingmen' | 'heat-missiles' | 'napalm';
-
-interface Subweapon {
-  id: SubweaponType;
-  name: string;
-  description: string;
-  emoji: string;
-}
-
-const SUBWEAPONS: Subweapon[] = [
-  { id: 'homing-missiles', name: 'Homing Missiles', description: 'Auto-target enemies', emoji: '🎯' },
-  { id: 'search-laser', name: 'Search Laser', description: 'Piercing laser', emoji: '⚡' },
-  { id: 'plasma-mines', name: 'Plasma Mines', description: 'Bullet shield', emoji: '💠' },
-  { id: 'seeking-wingmen', name: 'Seeking Wingmen', description: 'Attack drones', emoji: '🛸' },
-  { id: 'heat-missiles', name: 'Heat Missiles', description: 'Piercing missiles', emoji: '🔥' },
-  { id: 'napalm', name: 'Napalm Bombs', description: 'Zigzag flames', emoji: '💥' },
-];
+import { 
+  Star,
+  Bullet,
+  Enemy,
+  BigEnemy,
+  Particle,
+  PowerUp,
+  Score,
+  SubweaponType,
+  Subweapon,
+  SUBWEAPONS
+} from '../types/gameObjects';
 
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 450;
