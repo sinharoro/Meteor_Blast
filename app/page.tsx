@@ -65,6 +65,7 @@ export default function MeteorBlast() {
       subweaponCooldown: 0,
       subweaponLevel: 1,
     },
+    charge: 0,
     spriteCache: {} as Record<string, HTMLCanvasElement>,
     currentPlayerName: '',
     isGameOver: false,
@@ -166,6 +167,16 @@ export default function MeteorBlast() {
       player.health += player.repairRate;
       if (player.health > 100) player.health = 100;
       setHealth(player.health);
+    }
+
+    // Charge meter increases when hitting enemies
+    if (state.charge < 100) {
+      const newCharge = Math.min(state.charge + 0.1, 100);
+      state.charge = newCharge;
+      setCharge(newCharge);
+      if (newCharge >= 100) {
+        setShowChargeBtn(true);
+      }
     }
 
     if (state.shockwaveActive) {
@@ -1109,6 +1120,15 @@ export default function MeteorBlast() {
             onTouchEnd={handleFireEnd}
           >
             FIRE
+          </button>
+          <button
+            id="special-btn"
+            className={showChargeBtn ? 'ready' : ''}
+            onTouchStart={() => showChargeBtn && activateSpecialSkill()}
+            style={{ display: showChargeBtn ? 'block' : 'none' }}
+          >
+            <div className="charge-bar" style={{ width: `${charge}%` }} />
+            SPECIAL
           </button>
         </div>
 
