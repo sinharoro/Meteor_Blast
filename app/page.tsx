@@ -173,7 +173,7 @@ export default function MeteorBlast() {
 
     // Charge meter increases when hitting enemies
     if (state.charge < 100) {
-      const newCharge = Math.min(state.charge + 0.1, 100);
+      const newCharge = Math.min(state.charge + 0.5, 100);  // Increased from 0.1 to 0.5
       state.charge = newCharge;
       setCharge(newCharge);
       if (newCharge >= 100) {
