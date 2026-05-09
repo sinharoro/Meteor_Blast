@@ -34,6 +34,7 @@ export default function MeteorBlast() {
   const [healthBarClass, setHealthBarClass] = useState('');
   const [showSubweaponSelect, setShowSubweaponSelect] = useState(false);
   const [showChargeBtn, setShowChargeBtn] = useState(false);
+  const [charge, setCharge] = useState(0);
 
   const gameState = useRef({
     running: false,
