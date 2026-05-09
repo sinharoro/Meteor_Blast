@@ -477,16 +477,6 @@ export default function MeteorBlast() {
           state.enemies.splice(i, 1);
           state.bullets.splice(bi, 1);
           setScore((s) => s + 10);
-          if (Math.random() < 0.15) {
-            state.powerUps.push({
-              x: en.x,
-              y: en.y,
-              w: 25,
-              h: 25,
-              type: 'subweapon',
-              speed: 2
-            });
-          }
           break;
         }
       }
@@ -529,16 +519,6 @@ export default function MeteorBlast() {
                 h: 30,
                 type: types[Math.floor(Math.random() * types.length)],
                 speed: 2,
-              });
-            }
-            if (Math.random() < 0.25) {
-              state.powerUps.push({
-                x: ben.x,
-                y: ben.y,
-                w: 25,
-                h: 25,
-                type: 'subweapon',
-                speed: 2
               });
             }
             state.bigenemies.splice(i, 1);
