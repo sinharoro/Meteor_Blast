@@ -309,6 +309,43 @@ body {
   transform: scale(0.95);
 }
 
+#special-btn {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  width: 100px;
+  height: 40px;
+  background: rgba(0,0,0,0.5);
+  border: 2px solid #555;
+  border-radius: 5px;
+  color: #777;
+  font-weight: bold;
+  overflow: hidden;
+  opacity: 0.7;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#special-btn.ready {
+  border-color: #ff00ff;
+  color: white;
+  opacity: 1;
+  box-shadow: 0 0 10px #ff00ff;
+}
+
+.charge-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(to right, #00ffff, #ff00ff);
+  transition: width 0.1s;
+}
+
 #fullscreen-btn {
   color: var(--green);
   background: transparent;
