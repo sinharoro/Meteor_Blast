@@ -749,15 +749,29 @@ export default function MeteorBlast() {
         ctx.restore();
       });
 
+      // Draw laser beam effect
       if (state.shockwaveActive) {
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(player.x + player.w / 2, player.y + player.h / 2, state.shockwaveRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(0, 255, 255, ${1 - state.shockwaveRadius / MAX_SHOCKWAVE})`;
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.15 - (state.shockwaveRadius / MAX_SHOCKWAVE) * 0.15})`;
-        ctx.fill();
+        const laserWidth = player.w * 3;
+        const laserHeight = player.h * 3;
+        
+        // Laser core
+        const gradient = ctx.createLinearGradient(
+          player.x, player.y, 
+          player.x + laserWidth, player.y + laserHeight
+        );
+        gradient.addColorStop(0, 'rgba(0, 255, 255, 0.8)');
+        gradient.addColorStop(1, 'rgba(0, 128, 255, 0.8)');
+        ctx.fillStyle = gradient;
+        ctx.globalAlpha = 0.6;
+        ctx.fillRect(player.x, player.y, laserWidth, laserHeight);
+        
+        // Laser glow
+        ctx.globalAlpha = 0.3;
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = '#00ffff';
+        ctx.fillRect(player.x - 10, player.y - 10, laserWidth + 20, laserHeight + 20);
+        
         ctx.restore();
       }
     }
