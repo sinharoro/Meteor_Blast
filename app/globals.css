@@ -191,6 +191,40 @@ body {
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
 }
 
+#charge-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 12px;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+#charge-label {
+  font-size: 11px;
+  color: #ff00ff;
+  font-family: var(--font-d);
+  font-weight: 700;
+}
+
+#charge-bar-bg {
+  width: 80px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #333;
+  position: relative;
+  overflow: hidden;
+}
+
+#charge-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, #00ffff, #ff00ff);
+  transition: width 0.1s;
+}
+
 #health-bar-container {
   display: flex;
   align-items: center;
