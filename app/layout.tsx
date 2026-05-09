@@ -4,6 +4,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Meteor Blast: Ultra Edition',
   description: 'A deep space noir arcade shooter',
+  icons: {
+    icon: '/MBlast.png',
+  },
 }
 
 export default function RootLayout({
