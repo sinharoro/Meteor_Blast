@@ -32,6 +32,7 @@ export default function MeteorBlast() {
   const [emergencyUsed, setEmergencyUsed] = useState(false);
   const [shieldLabel, setShieldLabel] = useState('SHIELD');
   const [healthBarClass, setHealthBarClass] = useState('');
+  const [showSubweaponSelect, setShowSubweaponSelect] = useState(false);
 
   const gameState = useRef({
     running: false,
