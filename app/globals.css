@@ -311,7 +311,7 @@ body {
 
 #special-btn {
   position: fixed;
-  bottom: 40px;
+  bottom: 160px;  /* Moved up above fire button */
   right: 40px;
   width: 100px;
   height: 40px;
