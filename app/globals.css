@@ -194,20 +194,24 @@ body {
 #health-bar-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 12px;
+  border: 1px solid var(--cyan);
+  border-radius: 8px;
 }
 
 #shield-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--cyan);
   font-family: var(--font-d);
   font-weight: 700;
 }
 
 #health-bar-bg {
-  width: 120px;
-  height: 16px;
-  background: rgba(0, 0, 0, 0.55);
+  width: 100px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.8);
   border: 1px solid var(--cyan);
   position: relative;
   overflow: hidden;
@@ -215,20 +219,37 @@ body {
 
 #health-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--cyan), var(--green));
-  box-shadow: 0 0 10px var(--cyan);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--green), var(--cyan));
+  box-shadow: 0 0 8px var(--cyan);
+  transition: width 0.2s ease;
 }
 
 #health-bar-fill.emergency {
-  background: linear-gradient(90deg, var(--coral), var(--gold));
-  box-shadow: 0 0 10px var(--coral);
+  background: linear-gradient(90deg, var(--gold), var(--coral));
+  box-shadow: 0 0 8px var(--coral);
 }
 
 #health-bar-fill.critical {
-  background: linear-gradient(90deg, var(--coral), #FF7700);
-  box-shadow: 0 0 10px var(--coral);
+  background: linear-gradient(90deg, #FF7700, var(--coral));
+  box-shadow: 0 0 8px var(--coral);
+  animation: pulse-critical 0.5s infinite;
 }
+
+@keyframes pulse-critical {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+#health-percent {
+  font-family: var(--font-d);
+  font-size: 12px;
+  color: var(--green);
+  min-width: 40px;
+  text-align: right;
+}
+
+#health-percent.emergency { color: var(--gold); }
+#health-percent.critical { color: var(--coral); }
 
 #ui-container {
   display: none;
@@ -563,4 +584,76 @@ body {
 
 @media screen and (max-width: 840px) {
   #scoreboard { display: none; }
+}
+
+#subweapon-screen {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+}
+
+.subweapon-box {
+  max-width: 700px;
+  width: 90%;
+}
+
+.subweapon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.subweapon-card {
+  background: rgba(0, 245, 255, 0.05);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.subweapon-card:hover {
+  background: rgba(0, 245, 255, 0.15);
+  border-color: var(--cyan);
+}
+
+.subweapon-card.selected {
+  background: rgba(0, 245, 255, 0.25);
+  border-color: var(--green);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+}
+
+.subweapon-emoji {
+  font-size: 32px;
+}
+
+.subweapon-name {
+  font-family: var(--font-d);
+  font-size: 12px;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.subweapon-card.selected .subweapon-name {
+  color: var(--green);
+}
+
+.subweapon-desc {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#confirm-subweapon-btn {
+  margin-top: 20px;
+  padding: 15px 40px;
+  font-size: 16px;
 }
