@@ -1,11 +1,8 @@
-CREATE DATABASE IF NOT EXISTS meteor_blast;
-USE meteor_blast;
-
 CREATE TABLE IF NOT EXISTS scores (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   name VARCHAR(20) NOT NULL,
-  score INT NOT NULL,
+  score INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_score ON scores(score DESC);
+CREATE INDEX IF NOT EXISTS idx_score ON scores(score DESC);

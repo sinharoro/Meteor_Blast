@@ -18,7 +18,7 @@ const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 450;
 const FIRE_RATE = 100;
 const MAX_SHOCKWAVE = 1200;
-const API_BASE = '/api';
+const API_BASE = '/api/scores';
 
 export default function MeteorBlast() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1033,7 +1033,7 @@ export default function MeteorBlast() {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    fetch(`${API_BASE}/leaderboard.php`)
+fetch(API_BASE)
       .then(r => r.json())
       .then(data => setLeaderboard(data))
       .catch(() => setLeaderboard([]));
@@ -1108,12 +1108,12 @@ export default function MeteorBlast() {
     const finalScore = gameState.current.score;
     if (name && finalScore > 0) {
       try {
-        await fetch(`${API_BASE}/submit_score.php`, {
+        await fetch(API_BASE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, score: finalScore }),
         });
-        const res = await fetch(`${API_BASE}/leaderboard.php`);
+        const res = await fetch(API_BASE);
         const data = await res.json();
         setLeaderboard(data);
       } catch {}
