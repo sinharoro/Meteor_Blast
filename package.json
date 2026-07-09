@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
     "@next/swc-win32-x64-msvc": "^16.2.10",
     "next": "14.2.3",
     "react": "^18.3.1",
