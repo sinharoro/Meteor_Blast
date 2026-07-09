@@ -18,6 +18,7 @@ const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 450;
 const FIRE_RATE = 100;
 const MAX_SHOCKWAVE = 1200;
+const API_BASE = 'http://localhost/meteor_blast/api';
 
 export default function MeteorBlast() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -36,9 +37,15 @@ export default function MeteorBlast() {
   const [showChargeBtn, setShowChargeBtn] = useState(false);
   const [specialCharge, setSpecialCharge] = useState(0);
 
+  const addToScore = (points: number) => {
+    gameState.current.score += points;
+    setScore((s) => s + points);
+  };
+
   const gameState = useRef({
     running: false,
     paused: false,
+    score: 0,
     lastFireTime: 0,
     shakeTimer: 0,
     shockwaveActive: false,
@@ -222,7 +229,7 @@ export default function MeteorBlast() {
         if (Math.abs(enemyCenterY - centerY) < beamWidth / 2 + en.h / 2) {
           createExplosion(en.x + en.w / 2, en.y + en.h / 2, '#00ffff', 15);
           state.enemies.splice(i, 1);
-          setScore((s) => s + 15);
+          addToScore(15);
         }
       }
     }
@@ -242,7 +249,7 @@ export default function MeteorBlast() {
           if (ben.hp <= 0) {
             createExplosion(ben.x + ben.w / 2, ben.y + ben.h / 2, '#ff4444', 30);
             state.bigenemies.splice(i, 1);
-            setScore((s) => s + 150);
+            addToScore(150);
           }
         }
       }
@@ -313,7 +320,7 @@ export default function MeteorBlast() {
         if (Math.sqrt(dx * dx + dy * dy) < state.shockwaveRadius) {
           createExplosion(en.x, en.y, '#00ffff', 5);
           state.enemies.splice(i, 1);
-          setScore((s) => s + 10);
+          addToScore(10);
         }
       }
       for (let i = state.bigenemies.length - 1; i >= 0; i--) {
@@ -323,7 +330,7 @@ export default function MeteorBlast() {
         if (Math.sqrt(dx * dx + dy * dy) < state.shockwaveRadius) {
           createExplosion(ben.x, ben.y, '#ff0000', 15);
           state.bigenemies.splice(i, 1);
-          setScore((s) => s + 100);
+          addToScore(100);
         }
       }
       if (state.shockwaveRadius > MAX_SHOCKWAVE) state.shockwaveActive = false;
@@ -519,7 +526,7 @@ export default function MeteorBlast() {
           if (Math.sqrt(dx * dx + dy * dy) < b.r + 20) {
             createExplosion(en.x + 15, en.y + 15, '#aa44ff', 10);
             state.enemies.splice(j, 1);
-            setScore(s => s + 15);
+            addToScore(15);
           }
         }
         for (let j = state.bigenemies.length - 1; j >= 0; j--) {
@@ -532,7 +539,7 @@ export default function MeteorBlast() {
             if (ben.hp <= 0) {
               createExplosion(ben.x + 30, ben.y + 30, 'red', 25);
               state.bigenemies.splice(j, 1);
-              setScore(s => s + 150);
+              addToScore(150);
             }
           }
         }
@@ -555,7 +562,7 @@ export default function MeteorBlast() {
           player.health = Math.min(player.health + 30, 100);
           setHealth(player.health);
         } else if (pu.type === 'score') {
-          setScore((s) => s + 500);
+          addToScore(500);
         } else if (pu.type === 'rapid-fire') {
           player.isRapidFiring = true;
           if (player.rapidFireTimer) clearTimeout(player.rapidFireTimer);
@@ -564,7 +571,7 @@ export default function MeteorBlast() {
           }, 7000);
         } else if (pu.type === 'subweapon') {
           player.subweaponLevel = Math.min(player.subweaponLevel + 1, 3);
-          setScore((s) => s + 100);
+          addToScore(100);
         }
         state.powerUps.splice(i, 1);
       } else if (pu.x + pu.w < 0) {
@@ -612,7 +619,7 @@ export default function MeteorBlast() {
           createExplosion(en.x + 15, en.y + 15, '#9f9f9f', 8);
           state.enemies.splice(i, 1);
           state.bullets.splice(bi, 1);
-          setScore((s) => s + 10);
+          addToScore(10);
           if (state.specialCharge < 100) {
             state.specialCharge = Math.min(state.specialCharge + 1, 100);
             setSpecialCharge(state.specialCharge);
@@ -668,7 +675,7 @@ export default function MeteorBlast() {
               });
             }
             state.bigenemies.splice(i, 1);
-            setScore((s) => s + 100);
+            addToScore(100);
             state.shakeTimer = 10;
           }
           break;
@@ -792,7 +799,7 @@ export default function MeteorBlast() {
           if (Math.abs(enemyCenterY - centerY) < 65 && en.x > state.player.x) {
             createExplosion(en.x + en.w / 2, en.y + en.h / 2, '#00BFFF', 12);
             state.enemies.splice(i, 1);
-            setScore((s) => s + 10);
+            addToScore(10);
           }
         }
         for (let i = state.bigenemies.length - 1; i >= 0; i--) {
@@ -801,7 +808,7 @@ export default function MeteorBlast() {
           if (Math.abs(benCenterY - centerY) < 75 && ben.x > state.player.x) {
             createExplosion(ben.x + ben.w / 2, ben.y + ben.h / 2, '#00BFFF', 15);
             state.bigenemies.splice(i, 1);
-            setScore((s) => s + 100);
+            addToScore(100);
           }
         }
       }
@@ -1026,6 +1033,11 @@ export default function MeteorBlast() {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
+    fetch(`${API_BASE}/leaderboard.php`)
+      .then(r => r.json())
+      .then(data => setLeaderboard(data))
+      .catch(() => setLeaderboard([]));
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
@@ -1039,6 +1051,8 @@ export default function MeteorBlast() {
       gameState.current.running = false;
     }
   }, [showLogin, showSubweaponSelect]);
+
+  useEffect(() => { gameState.current.score = score; }, [score]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1090,6 +1104,21 @@ export default function MeteorBlast() {
     gameState.current.paused = false;
     gameState.current.isGameOver = true;
 
+    const name = gameState.current.currentPlayerName;
+    const finalScore = gameState.current.score;
+    if (name && finalScore > 0) {
+      try {
+        await fetch(`${API_BASE}/submit_score.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, score: finalScore }),
+        });
+        const res = await fetch(`${API_BASE}/leaderboard.php`);
+        const data = await res.json();
+        setLeaderboard(data);
+      } catch {}
+    }
+
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (ctx) {
@@ -1100,7 +1129,7 @@ export default function MeteorBlast() {
       ctx.font = "bold 40px 'Courier New'";
       ctx.fillText(msg, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 100);
       ctx.font = "bold 20px 'Courier New'";
-      ctx.fillText(`FINAL SCORE: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30);
+      ctx.fillText(`FINAL SCORE: ${finalScore}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30);
     }
 
     setShowLoading(true);
