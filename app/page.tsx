@@ -18,7 +18,7 @@ const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 450;
 const FIRE_RATE = 100;
 const MAX_SHOCKWAVE = 1200;
-const API_BASE = 'http://localhost/meteor_blast/api';
+const API_BASE = '/api';
 
 export default function MeteorBlast() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
